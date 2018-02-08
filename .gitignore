@@ -37,3 +37,12 @@ Makefile*
 # QtCtreator CMake
 CMakeLists.txt.user*
 
+# Visual Studio
+*.vcxproj.filters
+*.vcxproj.user
+
+# builds & data
+x64/
+debug/
+release/
+account.dat
