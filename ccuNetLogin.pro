@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -35,4 +35,10 @@ HEADERS += \
 FORMS += \
         mainwindow.ui
 
-CONFIG += c++17
+CONFIG += c++14
+
+QMAKE_CFLAGS_DEBUG += -MDd
+QMAKE_CXXFLAGS_DEBUG += -MDd
+
+QMAKE_CFLAGS_RELEASE += -MT
+QMAKE_CXXFLAGS_RELEASE += -MT

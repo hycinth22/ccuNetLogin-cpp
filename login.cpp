@@ -1,55 +1,54 @@
+Ôªø#include "stdafx.h"
+#include <QDir>
+#include <QDataStream>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QEventLoop>
+#include <QTimer>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+
+#include "accountInfo.h"
 #include "login.h"
-#include <iostream>
-#include <fstream>
-#include <filesystem>
 
-// hack on STL experimental libraries
-namespace std {
-	using namespace ::std;
-	using namespace ::std::experimental;
-}
+static QNetworkAccessManager qtNetwork;
 
-using namespace std;
-namespace fs = filesystem;
+static QDir workDir = QDir::current();
+static QFile accountFile(workDir.absoluteFilePath("account.dat"));
 
-const fs::path workDir = fs::current_path();
-const fs::path accountFile = workDir / "account.dat";
-
-
-void removeSavedAccount()
+bool removeSavedAccount()
 {
-    remove(accountFile);
+    return accountFile.remove();
 }
 
 void saveAccount(AccountInfo account)
 {
-	clog << workDir;
-	ofstream os(accountFile, ios::binary|ios::trunc);
-	os << account;
-	os.close();
+    //qDebug() << workDir.absoluteFilePath;
+    accountFile.open(QIODevice::WriteOnly | QIODevice::Truncate);
+    accountFile.reset();
+    QDataStream stream(&accountFile);
+    stream << account;
 }
 
 AccountInfo getSavedAccount() {
-	AccountInfo account;
-	ifstream is(accountFile, ios::binary);
-	is >> account;
-	is.close();
-	return move(account);
+    accountFile.open(QIODevice::ReadOnly);
+    QDataStream stream(&accountFile);
+    AccountInfo account;
+    stream >> account;
+    accountFile.close();
+	return std::move(account);
 }
-
 
 struct LoginResp {
 	bool Success;
-	string Msg;
-	string Action;
+	QString Msg;
+    QString Action;
 	int Pop;
-	string Username;
-	string Location;
+    QString Username;
+    QString Location;
 };
-#include <map>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonArray>
+
 class QJsonValueWrapper : public QJsonValue {
 	using QJsonValue::QJsonValue;
 public:
@@ -69,7 +68,10 @@ public:
 	operator double() {
 		return this->toDouble();
 	}
-	operator string() {
+    operator QString() {
+        return this->toString();
+    }
+	operator std::string() {
 		return this->toString().toStdString();
 	}
 	operator QJsonArray() {
@@ -80,63 +82,66 @@ public:
 	}
 };
 template <typename destType>
-bool parseField(const QJsonObject& obj, const QString& name, const QJsonValue::Type& type, destType& dest) {
+void parseField(const QJsonObject& obj, const QString& name, const QJsonValue::Type& type, destType& dest) {
 	if (obj.contains(name)) {
 		QJsonValueWrapper val = obj.value(name);
 		if (val.type() == type)
 		{
 			dest = val;
-			return true;
 		}
 		else {
-			throw LoginFailedException(string(u8"∑˛ŒÒ∆˜∑µªÿœ˚œ¢∫¨”–≤ªø…¥¶¿Ìµƒ¿‡–Õ"));
+			throw LoginFailedException("ÊúçÂä°Âô®ËøîÂõûÊ∂àÊÅØÂê´Êúâ‰∏çÂèØÂ§ÑÁêÜÁöÑÁ±ªÂûã");
 		}
-	}
-	return false;
+    }
+    else {
+        throw LoginFailedException(QString("Â∞ùËØïËß£Êûê‰∏çÂ≠òÂú®ÁöÑÂ≠óÊÆµ") + name);
+    }
 }
-LoginResp parseResp(const QByteArray& binary) {
-	auto doc = QJsonDocument::fromBinaryData(binary);
-	if (!doc.isNull()) {
+// ËøîÂõûÁöÑJSON‰∏çÊ†áÂáÜ‰ºöÂØºËá¥Ëß£ÊûêÈîôËØØÔºåËß£Êûê‰πãÂâçÂú®ËøôÈáåÂÅö‰øÆÊ≠£
+QByteArray FixJSONHack(const QByteArray& binary) {
+    QByteArray result(binary);
+    result.replace("'", "\"");
+    return result;
+}
+LoginResp parseResp(const QByteArray& rawBinary) {
+    QByteArray binary = FixJSONHack(rawBinary);
+    QJsonParseError *error = new QJsonParseError;  
+	auto doc = QJsonDocument::fromJson(binary, error);
+	if (error->error == QJsonParseError::NoError && !doc.isNull()) {
 		if (doc.isObject()) {
 			QJsonObject obj = doc.object();
 			LoginResp result;
-			parseField(obj, "Success", QJsonValue::Type::Bool, result.Success);
-			parseField(obj, "Msg", QJsonValue::Type::String, result.Msg);
-			parseField(obj, "Action", QJsonValue::Type::String, result.Action);
-			parseField(obj, "Pop", QJsonValue::Type::Double, result.Pop);
-			parseField(obj, "UserName", QJsonValue::Type::String, result.Username);
-			parseField(obj, "Location", QJsonValue::Type::String, result.Location);
-			return move(result);
+			parseField(obj, "success", QJsonValue::Type::Bool, result.Success);
+			parseField(obj, "msg", QJsonValue::Type::String, result.Msg);
+			parseField(obj, "action", QJsonValue::Type::String, result.Action);
+			parseField(obj, "pop", QJsonValue::Type::Double, result.Pop);
+			parseField(obj, "userName", QJsonValue::Type::String, result.Username);
+			parseField(obj, "location", QJsonValue::Type::String, result.Location);
+			return result;
 		}
 	}
-	throw LoginFailedException(string(u8"∑˛ŒÒ∆˜∑µªÿœ˚œ¢µƒ∏Ò Ω≤ª’˝»∑"));
+    qDebug() << error->errorString();  
+	throw LoginFailedException(QString("ÊúçÂä°Âô®ËøîÂõûÊ∂àÊÅØÁöÑÊ†ºÂºè‰∏çÊ≠£Á°Æ") + error->errorString() );
 }
-#include <QDebug>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QEventLoop>
-#include <QTimer>
-static QNetworkAccessManager qNetwork;
+
 bool requestLogin(AccountInfo account)
 {
 	QNetworkAccessManager network;
-	qDebug() << "login begin! " << account.user.c_str() << "||" << account.pwd.c_str() << endl;
+	qDebug() << "login begin! " << account.user << "||" << account.pwd << endl;
 
 
 	// throw LoginFailedException("Not Implemented");
 
-	const QUrl LOGIN_URL = "http://1.1.1.2/ac_portal/login.php";
+	const QUrl LOGIN_URL("http://1.1.1.2/ac_portal/login.php");
 	QNetworkRequest request;
 	request.setUrl(LOGIN_URL);
 	request.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-www-form-urlencoded");
-	QNetworkReply* reply = network.post(request, QByteArray::fromStdString(
-		string() + 
-		"opr=pwdLogin"
-		+ "&userName=" + account.user
-		+ "&pwd=" + account.pwd
-		+ "&rememberPwd=0"
-
-	));
+	QNetworkReply* reply = network.post(request, 
+        ( QString() + "opr=pwdLogin"
+            + "&userName=" + account.user
+            + "&pwd=" + account.pwd
+            + "&rememberPwd=0" ).toUtf8()
+	);
 
 	QEventLoop eventLoop;
 	QTimer::singleShot(10 * 1000, &eventLoop, &QEventLoop::quit);
@@ -144,26 +149,26 @@ bool requestLogin(AccountInfo account)
 	eventLoop.exec(QEventLoop::ExcludeUserInputEvents);
 
 	if (!reply->isFinished()) {
-		throw LoginFailedException(string(u8"Õ¯¬Á«Î«Û≥¨ ±"));
+		throw LoginFailedException("ÁΩëÁªúËØ∑Ê±ÇË∂ÖÊó∂");
 	}
-
+    
 	QNetworkReply::NetworkError error = reply->error();
 	if (error != QNetworkReply::NetworkError::NoError) {
-		throw LoginFailedException(string(u8"Õ¯¬Á«Î«Û∑¢…˙¥ÌŒÛ£¨¥ÌŒÛ¬Î£∫") + to_string(error));
+		throw LoginFailedException(QString("ÁΩëÁªúËØ∑Ê±ÇÂèëÁîüÈîôËØØÔºåÈîôËØØÁ†ÅÔºö") + error);
 	}
 
 	int statusCode = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
 	if (statusCode != 200) {
-		throw LoginFailedException(string(u8"∑˛ŒÒ∆˜∑µªÿ¥ÌŒÛµƒ◊¥Ã¨¬Î£∫") + to_string(statusCode));
+		throw LoginFailedException(QString("ÊúçÂä°Âô®ËøîÂõûÈîôËØØÁöÑÁä∂ÊÄÅÁ†ÅÔºö") + statusCode);
 	}
 
 	QByteArray replyData = reply->readAll();
-
+ 
 	LoginResp resp = parseResp(replyData);
 
 	if (!resp.Success)
 	{
-		throw LoginFailedException(string(u8"∑˛ŒÒ∆˜∑µªÿœ˚œ¢£∫") + resp.Msg);
+		throw LoginFailedException(QString("ÊúçÂä°Âô®ËøîÂõûÊ∂àÊÅØÔºö") + resp.Msg);
 	}
 
 	return resp.Success;

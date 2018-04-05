@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>292</width>
-    <height>128</height>
+    <width>234</width>
+    <height>125</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -20,82 +20,97 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>长春大学校园网登录</string>
+   <string>CCDX登录</string>
   </property>
   <widget class="QWidget" name="centralWidget">
    <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
-      <x>20</x>
+      <x>10</x>
       <y>10</y>
-      <width>241</width>
-      <height>105</height>
+      <width>221</width>
+      <height>116</height>
      </rect>
     </property>
-    <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>帐号：</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="lineEdit_user">
-       <property name="inputMethodHints">
-        <set>Qt::ImhDigitsOnly</set>
-       </property>
-       <property name="maxLength">
-        <number>16</number>
-       </property>
-       <property name="placeholderText">
-        <string>输入帐号</string>
-       </property>
-      </widget>
+    <layout class="QGridLayout" name="gridLayout">
+     <property name="verticalSpacing">
+      <number>6</number>
+     </property>
+     <item row="0" column="0" colspan="2">
+      <layout class="QVBoxLayout" name="verticalLayout">
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>帐号：</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="lineEdit_user">
+           <property name="inputMethodHints">
+            <set>Qt::ImhDigitsOnly</set>
+           </property>
+           <property name="maxLength">
+            <number>16</number>
+           </property>
+           <property name="placeholderText">
+            <string>输入帐号</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <item>
+          <widget class="QLabel" name="label_2">
+           <property name="text">
+            <string>密码：</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLineEdit" name="lineEdit_pwd">
+           <property name="inputMethodHints">
+            <set>Qt::ImhHiddenText|Qt::ImhNoAutoUppercase|Qt::ImhNoPredictiveText|Qt::ImhSensitiveData</set>
+           </property>
+           <property name="maxLength">
+            <number>16</number>
+           </property>
+           <property name="frame">
+            <bool>true</bool>
+           </property>
+           <property name="echoMode">
+            <enum>QLineEdit::Password</enum>
+           </property>
+           <property name="placeholderText">
+            <string>输入密码</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="label_2">
+      <widget class="QCheckBox" name="checkBox_rem">
        <property name="text">
-        <string>密码：</string>
+        <string>记住帐号密码</string>
        </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="lineEdit_pwd">
-       <property name="inputMethodHints">
-        <set>Qt::ImhHiddenText|Qt::ImhNoAutoUppercase|Qt::ImhNoPredictiveText|Qt::ImhSensitiveData</set>
-       </property>
-       <property name="maxLength">
-        <number>16</number>
-       </property>
-       <property name="frame">
+       <property name="checked">
         <bool>true</bool>
        </property>
-       <property name="echoMode">
-        <enum>QLineEdit::Password</enum>
-       </property>
-       <property name="placeholderText">
-        <string>输入密码</string>
-       </property>
       </widget>
      </item>
-     <item row="4" column="1">
+     <item row="2" column="1">
       <widget class="QPushButton" name="pushButton_login">
        <property name="accessibleName">
         <string/>
        </property>
        <property name="text">
         <string>登录</string>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QCheckBox" name="checkBox_rem">
-       <property name="text">
-        <string>记住帐号</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
        </property>
       </widget>
      </item>
